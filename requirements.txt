@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+asyncpg
+chromadb
+sentence-transformers
+redis
+google-adk
+python-dotenv
+pydantic-settings
