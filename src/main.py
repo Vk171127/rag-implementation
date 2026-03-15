@@ -10,6 +10,8 @@ load_dotenv()
 from modules.database.db_manager import db_manager
 from modules.vector.vector_store import vector_store
 from modules.cache.redis_manager import redis_manager
+from agents.requirement_analyzer import analyze_requirements
+from agents.test_case_generator import generate_test_cases
 
 
 
@@ -82,4 +84,25 @@ async def test_cache_speed():
         "slow_path_ms": round(slow_time * 1000, 2),
         "cache_hit_ms": round(fast_time * 1000, 2),
         "speedup": f"{round(slow_time / max(fast_time, 0.0001))}x faster"
+    }
+
+@app.get("/test-agents")
+async def test_agents():
+    # Step 1: Analyze raw requirements
+    raw = "users should login with email, also need to reset password, account should lock after wrong attempts"
+    analyzed = await analyze_requirements(raw)
+
+    if analyzed["status"] != "success":
+        return {"error": analyzed["message"]}
+
+    # Step 2: Generate test cases from structured requirements
+    test_cases = await generate_test_cases(
+        requirements=analyzed["requirements"],
+        rag_context=["Login should use JWT tokens", "Lockout after 5 attempts is standard"]
+    )
+
+    return {
+        "requirements": analyzed["requirements"],
+        "test_cases": test_cases["test_cases"],
+        "used_rag": test_cases["used_rag_context"]
     }
